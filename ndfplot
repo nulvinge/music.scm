@@ -1,0 +1,7 @@
+set autoscale
+unset log
+unset label
+
+plot   "ndfdata" smooth csplines
+
+pause 10000
