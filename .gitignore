@@ -1,2 +1,5 @@
 *.swp
 *.mid
+ndfdata
+music.o*
+music.c

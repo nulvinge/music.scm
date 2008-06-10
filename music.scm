@@ -1,70 +1,9 @@
-(define (crnd)
-  (ascii->char (+ (char->ascii #\A)
-                  (random-integer (- (char->ascii #\Z)
-                             (char->ascii #\A)
-                             1)))))
-
-(define (floor->exact n)
-  (inexact->exact (flfloor (exact->inexact n))))
-(define (list-head l k)
-  (if (zero? k)
-    '()
-    (cons (car l)
-          (list-head (cdr l) (- k 1)))))
+(load "systemfuncs.scm")
+(load "math.scm")
+(load "midi.scm")
 
 (define notes
   '(C Cis D Dis E F Fis G Gis A Ais H))
-(define nnotes
-  (length notes))
-
-(define (nrnd)
-  (random nnotes))
-
-;makes an exponential number between 0 and (l^2)
-;with the highest probability around 0
-(define (random2 l)
-  (let ((r (random l)))
-    (* r r)))
-;makes an exponential number between -(l^2) and (l^2)
-;with the highest probability around 0
-(define (randomn l)
-  (let ((l2 (* l 2)))
-    (let ((r (random l2)))
-      (* (- r l)
-         (/ r 2)))))
-;Uses the masraglia algorithm to make a random number
-;with normal distribution of my=0 and sigma^2=1
-;This gives a spread of about from -4 to 4
-;and with 0.4 probability of becoming close to 0
-(define (marsaglia)
-  (let ((x (random-real))
-        (y (random-real)))
-    (let ((s (+ (* x x) (* y y))))
-      (if (> 1 s)
-        (let ((s2 (sqrt (/ (* -2 (log s)) s))))
-          (* x s2)) ;(* y s2) is unused
-        (marsaglia)))))
-(define (chop x a)
-  (max a
-       (min x
-            (- a))))
-(define (chopmars)
-  (let ((a (marsagla)))
-    (chop (car a) 4)))
-(define (mars midpoint scale)
-  (+ midpoint
-     (* (/ scale 4)
-        (marsaglia))))
-(define (from0mars->int midpoint)
-  (floor->exact (mars midpoint midpoint)))
-(define (from0mars->absint maxi)
-  (floor->exact (abs (mars 0 maxi))))
-(define (mars->int midpoint scale)
-  (floor->exact (mars midpoint scale)))
-
-(define (randomk)
-    (- 1 (sqrt (random-real))))
-
 
 (define (consRnd rnd)
   (define (lrnd count)
@@ -76,61 +15,10 @@
       '()
       (cons (rnd) (consRndLoop (+ 1 count)))))
   (consRndLoop 0))
-(define (consrndc) (consrnd crnd))
-(define (consrndn) (consrnd nrnd))
 
-
-(define (combine-loop a b absa absb)
-  (define nbytes 3)
-  (define (addvarlen l n)
-    (if (null? l)
-      '()
-      (let ((len (varlength l))
-            (data (readvarlen l)))
-        (append (num->varlen (+ data n))
-                (list-tail (list-head l (+ len nbytes)) len)
-                (list-tail l (+ len nbytes))))))
-  (if (null? a)
-    (addvarlen b (- absb absa))
-    (if (null? b)
-      (addvarlen a (- absa absb))
-      (let ((la (readvarlen a))
-            (lb (readvarlen b)))
-        (if (> (+ absa la) (+ absb lb))
-          (combine-loop b a absb absa)
-          (let ((bytes (+ (varlength a) nbytes))
-                (diff (if (> absb absa)
-                        (- (+ absa la) absb)
-                        la)))
-            (append (num->varlen diff)
-                    (list-tail (list-head a bytes) (- bytes nbytes))
-                    (combine-loop b
-                                  (list-tail a bytes)
-                                  absb
-                                  (+ absa la)))))))))
-(define (combine-start a b)
-  (combine-loop a b 0 0))
-(define (combine . lists)
-  (fold-left combine-start (car lists) (cdr lists))) 
-
-(define (fold-left f b . a*)
-  (define (fold a* r)
-    (if (null? (car a*))
-      r
-      (fold (map cdr a*)
-            (f r (car (car a*))))))
-  (fold a* b))
-
-(define (index object l)
-  (define (index-loop l i)
-    (if (null? l)
-      #f
-      (if (eq? (car l) object)
-        i
-        (index-loop (cdr l) (+ i 1)))))
-  (index-loop l 0))
 
 (define ppqn 120)
+(define ppf (* ppqn 4))
 
 (define (rpitch)
   (rpitch3))
@@ -184,9 +72,9 @@
 ; ppqn*4/(2^(r 0-8))
 ; ppqn*4 >> (r 0-8)
 (define (rlength1)
-  (fxarithmetic-shift (* ppqn 4) (- (mars->int 3 2))))
+  (fxarithmetic-shift ppf (- (mars->int 3 2))))
 (define (note->time n)
-  (floor->exact (/ (* ppqn 4) n)))
+  (floor->exact (/ ppf n)))
 (define rlength-count 0)
 (define (rlength2)
   (define rythm '(4 4   2.66 8
@@ -234,11 +122,11 @@
 (define (rwholenote)
   (rwholenote2))
 (define (rwholenote1)
-  (rnote (* ppqn 4)))
+  (rnote ppf))
 (define (rwholenote2)
   (define (loop absl)
     (let ((l (rlength)))
-      (let ((d (- (+ absl l) (* 4 ppqn))))
+      (let ((d (- (+ absl l) ppf)))
         (cond ((zero? d) 
                (rnote l))
               ((< d 0)
@@ -283,7 +171,7 @@
 
 (define (drumline n)
   (define ninstruments 4)
-  (define beats 1)
+  (define beats 4)
   (define (geninstruments count)
     (if (zero? count)
       '()
@@ -292,7 +180,7 @@
   (define instruments (geninstruments ninstruments))
   (define (beat)
     (note 0
-          (/ ppqn beats)
+          (/ ppf beats)
           9
           (list-ref instruments (from0mars->absint 4))
           (mars->int 100 30)))
@@ -308,8 +196,7 @@
       '()
       (append frame
               (loop (- count 1) frame))))
-  (loop (* n 1) (frame (* 4 beats))))
-
+  (loop (* n 1) (frame beats)))
 
 
 (define (chord pitch)
@@ -322,7 +209,7 @@
 
   (define (rnotewpitch i)
     (note 0
-          (* ppqn 4)
+          ppf
           2
           (+ pitch i)
           (mars->int 100 30)))
@@ -356,17 +243,6 @@
                             (frame)))
                  n))
 
-
-(define (generate-list generator n)
-  (define (loop n)
-    (if (zero? n)
-      '()
-      (append (generator)
-              (loop (- n 1)))))
-  (loop n))
-
-
-
 ;(define n (+ 2 (random 4)))
 (define n 3)
 (define (music) (combine (nframe n)
@@ -374,8 +250,6 @@
                          ;(drumline n)
                          ))
 
-
-;(write (flatten (consrnd randnote)))
 (define (refrain)
   (if (> 1 (random-integer 10))
     '()
@@ -384,152 +258,22 @@
               a
               (refrain)))))
 
-
-;The following function is called append in the standard
-(define (concat a b)
-  (if (null? a)
-    b
-    (cons (car a) (concat (cdr a) b))))
-
-(define (bin->note bin)
-  (list-ref notes bin))
-(define (bins->notes bins)
-  (map bin->note bins))
-
-;(set-current-output-port! (open-binary-output-file "m.midi"))
-;(map write-char (append (consrndc) (consrndc)))
-;(close-all-open-files)
-
-;the following line proves that zeroes are writeable
-;(write-char (ascii->char 0))
-
-(define (num->intel16 num)
-  (list (fxand num #xff)
-        (fxarithmetic-shift (fxand num #xff00) -8)))
-(define (num->intel32 num)
-  (append (num->intel16 (bitwise-and num #xffff))
-          (num->intel16 (arithmetic-shift num -16))))
-
-(define (num->motor16 num)
-  (list (fxarithmetic-shift (fxand num #xff00) -8)
-        (fxand num #xff)))
-(define (num->motor32 num)
-  (append (num->motor16 (arithmetic-shift num -16))
-          (num->motor16 (bitwise-and num #xffff))))
-
-
-;format: 0: single track
-;        1: many tracks that starts simulatiously
-;        2: many tracks that doesn't start simulatiously
-;division: number of Pulses (i.e. clocks) Per Quarter Note
-
-(define hexchars (string->list "0123456789ABCDEF"))
-(define (byte->hex num)
-  (list->string (list (list-ref hexchars (fxarithmetic-shift (fxand num #xf0) -4))
-                      (list-ref hexchars (fxand num #xf)))))
-
-(define (num->varlen num)
-  (define (varlen num)
-    (if (zero? num)
-      '()
-      (append (varlen (arithmetic-shift num -7))
-              (list (+ #x80 (bitwise-and num #x7f))))))
-  (if (< #xFFFFFFF num)
-    'Error
-    (append (varlen (arithmetic-shift num -7))
-            (list (bitwise-and num #x7f)))))
-;(write (map byte->hex (num->varlen #xFFFFFFF)))
-
-(define (readvarlen l)
-  (if (zero? (fxand #x80 (car l)))
-    (car l)
-    (+ (* #x80 (fxand #x7f (car l)))
-       (readvarlen (cdr l)))))
-(define (varlength l)
-  (define (loop n l)
-    (if (zero? (fxand #x80 (car l)))
-      n
-      (loop (+ 1 n) (cdr l))))
-  (loop 1 l))
-
 (define (flatten l)
   (if (null? l)
     '()
     (append (car l)
             (flatten (cdr l)))))
 
-(define endoftrack (list #x00 #xFF #x2F #x0))
-(define (track data)
-  (makechunk "MTrk" (append data
-                            endoftrack)))
-(define (mthdchunk format numtracks division)
-  (append (num->motor16 format)
-          (num->motor16 numtracks)
-          (num->motor16 division)))
-
-(define (makechunk header data)
-  (append (map char->integer (string->list header))
-          (num->motor32 (length data))
-          data))
-(define (midifile tracks)
-  (append (makechunk "MThd"
-                     (mthdchunk (if (< 1 (length tracks)) 1 0)
-                                (length tracks)
-                                ppqn)) ;120 pulses/quarter note
-          (flatten tracks)))
-
-(define (metaevent type text)
-  (append (num->varlen 0) ;delay
-          (list #xff
-                type)
-          (num->varlen (length text)))
-          text)
-(define (instrumentEvent instrument)
-  (metaevent 4 instrument))
-(define (channelPrefixEvent channel event)
-  (append (metaevent 32 (list channel))
-          event))
-
-(define (channelevent delta type channel par1 par2)
-  (append (num->varlen delta)
-          (list (fxior (fxarithmetic-shift-left type 4) channel)
-                par1
-                par2)))
-(define (shortchannelevent type channel par)
-  (list 0
-        (fxior (fxarithmetic-shift type 4) channel)
-        par))
-(define (noteon delta channel note velocity)
-  (channelevent delta
-                #x9
-                channel
-                note
-                velocity))
-(define (noteoff delta channel note velocity)
-  (channelevent delta
-                #x8
-                channel
-                note
-                velocity))
-
-(define (note delta length channel note velocity)
-  (append (noteon  delta  channel note velocity)
-          (noteoff (+ 10 length) channel note velocity)))
-
-
 (define (string->bytes str)
   (map char->ascii (string->list str)))
 
+(write (chord (rpitch))) (newline)
 
-(display (chord (rpitch)))
 (define midi (midifile (list (track (append (shortchannelevent #xC 2 29)
                                             (music))))))
 
-(display (length midi))
+(display (length midi)) (newline)
 (let ((port (open-output-file "m.mid")))
   (map (lambda (c) (write-char (integer->char c) port))
      midi)
   (close-port port))
-;(write (map byte->hex (midifile (list (track (flatten (consrnd randnote)))))))
-;(channelprefixevent 1 (instrumentEvent (string->bytes "Electric Guitar")))
-
