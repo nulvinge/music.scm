@@ -1,8 +1,10 @@
 all:	clear play
 clear:
 	clear
-run: music.scm
+runmit: music.scm
 	scheme --load music.scm </dev/null
+run: music.scm
+	gsi music.scm
 debug:
 	scheme --load music.scm --eval "(debug)"
 play:	run
