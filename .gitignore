@@ -1,5 +1,7 @@
 *.swp
 *.mid
+*.c
 ndfdata
 music.o*
-music.c
+music
+midiparser

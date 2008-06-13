@@ -5,9 +5,9 @@
 (define notes
   '(C Cis D Dis E F Fis G Gis A Ais H))
 
-(define (consRnd rnd)
+(define (consrnd rnd)
   (define (lrnd count)
-    (if (or (> 1 count) (< (random 10) 8))
+    (if (or (> 1 count) (< (random-integer 10) 8))
       #f
       #t))
   (define (consRndLoop count)
@@ -33,7 +33,7 @@
       (cons (index (car sscale) notes)
             (conv-scale (cdr sscale)))))
   (define scale (conv-scale sscale))
-  (+ (list-ref scale (random (length scale)))
+  (+ (list-ref scale (random-integer (length scale)))
      (* 12 (+ (mars->int 4 1) 1))))
 (define (rpitch-chord chord)
   (+ chord (mars->int 6 6)))
@@ -243,7 +243,7 @@
                             (frame)))
                  n))
 
-;(define n (+ 2 (random 4)))
+;(define n (+ 2 (random-integer 4)))
 (define n 3)
 (define (music) (combine (nframe n)
                          ;(chordedmelodyframes n)
@@ -265,12 +265,13 @@
             (flatten (cdr l)))))
 
 (define (string->bytes str)
-  (map char->ascii (string->list str)))
+  (map char->integer (string->list str)))
 
 (write (chord (rpitch))) (newline)
 
 (define midi (midifile (list (track (append (shortchannelevent #xC 2 29)
-                                            (music))))))
+                                            (music)))
+                             (track (music)))))
 
 (display (length midi)) (newline)
 (let ((port (open-output-file "m.mid")))

@@ -1,13 +1,15 @@
+(random-source-randomize! default-random-source)
+
 ;makes an exponential number between 0 and (l^2)
 ;with the highest probability around 0
 (define (random2 l)
-  (let ((r (random l)))
+  (let ((r (random-integer l)))
     (* r r)))
 ;makes an exponential number between -(l^2) and (l^2)
 ;with the highest probability around 0
 (define (randomn l)
   (let ((l2 (* l 2)))
-    (let ((r (random l2)))
+    (let ((r (random-integer l2)))
       (* (- r l)
          (/ r 2)))))
 ;Uses the masraglia algorithm to make a random number
@@ -26,9 +28,6 @@
   (max a
        (min x
             (- a))))
-(define (chopmars)
-  (let ((a (marsagla)))
-    (chop (car a) 4)))
 (define (mars midpoint scale)
   (+ midpoint
      (* (/ scale 4)
