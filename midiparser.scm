@@ -1,5 +1,6 @@
 (define pif 0);(input-port-byte-position (current-input-port))) ;place in file
 (define (r)
+  (write (list (peek) (peek-char))) (newline)
   (set! pif (+ 1 pif))
   (char->integer (read-char)))
 (define (peek)
@@ -66,7 +67,7 @@
       (begin
         (r)
         (match (cdr l)))
-      'Error1)))
+      (write (list "Expected " l "got " (peek) ".\n")))))
 
 (define (meta-event)
   (case (r)
@@ -74,6 +75,8 @@
 
 (define (event-data type)
   (case type
+    ((#x3) (list 'vol
+                 'value (r)))
     ((#x8) (list 'off
                  'note (r)
                  'velocity (r)))
@@ -89,7 +92,7 @@
     ((#xD) (list 'pressure (r)))
     ((#xE) (list 'pitch-bend (r) (r)))
     ((#xF) (list 'meta (meta-event)))
-    (else 'Error2)))
+    (else (display (list "Unexpected event type " type ".\n")))))
 
 (define (event)
   (let ((delta (readvarlen))
@@ -180,7 +183,7 @@
 (define (chunk name)
   (if (null? (match (string->ints name)))
     (read-motor32)
-    'Error4))
+    (display (list "Expected " name ".\n"))))
 (define (header)
   (chunk "MThd")
   (set! format    (read-motor16))
@@ -242,7 +245,7 @@
 
 (define config-file "midiparser.config")
 (define action 'play)
-(define input-file "m.mid")
+(define input-file "sow.mid")
 (define playcmd "./play")
 (define (parse-parameters par)
   (if (not (null? par))
@@ -261,9 +264,9 @@
       (begin
         (set! input-file (car par))
         (parse-parameters (cdr par))))))
-;(parse-parameters (list "-action" "parse" "1m.mid"))
+(parse-parameters (list "-action" "parse" "sow.mid"))
 ;(parse-parameters (list "-help"))
-(parse-parameters (cdr (command-line)))
+;(parse-parameters (cdr (command-line)))
 
 (case action
   ('table  (table-for-each (lambda(k v) (write (list k v)) (newline))

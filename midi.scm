@@ -28,8 +28,21 @@
                 type)
           (num->varlen (length text)))
           text)
-(define (instrumentEvent instrument)
-  (metaevent 4 instrument))
+(define (instrumentevent channel instrument)
+  (shortchannelevent #xC channel instrument))
+
+(define (volume channel value)
+  (channelevent 0
+                #xB
+                channel
+                7
+                value))
+(define (balance channel value)
+  (channelevent 0
+                #xB
+                channel
+                8
+                value))
 (define (channelPrefixEvent channel event)
   (append (metaevent 32 (list channel))
           event))
@@ -115,3 +128,42 @@
       n
       (loop (+ 1 n) (cdr l))))
   (loop 1 l))
+
+;a ni is like this:
+;(length channel note)
+;channel = 9 means drums
+;channel = 17 means pause
+(define (ni->midinote delta ni)
+  (note delta
+        (car ni)
+        (cadr ni)
+        (caddr ni)
+        (+ 60 (random-integer 60))))
+(define (nis->midinotes nis)
+ (define delta 0)
+   (make-loop append
+              (lambda(ni)
+                (if (= (cadr ni) 17) ;pause
+                  (begin
+                    (set! delta (car ni))
+                    '())
+                  (let ((mid (ni->midinote delta ni)))
+                    (set! delta 0)
+                    mid)))
+              nis))
+
+(define (ni l c n)
+  (list l c n))
+
+(define (pause l)
+  (ni l 17 0))
+
+(define (make-midi nis-list other-list)
+  (define (loop n o)
+    (if (null? n)
+      '()
+      (append (list (track (append (car o)
+                                   (nis->midinotes (car n)))))
+              (loop (cdr n)
+                    (cdr o)))))
+  (midifile (loop nis-list other-list)))

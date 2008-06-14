@@ -36,6 +36,14 @@
               (loop (- n 1)))))
   (loop n))
 
+(define (cons-generated generator n)
+  (define (loop n)
+    (if (zero? n)
+      '()
+      (cons (generator)
+            (loop (- n 1)))))
+  (loop n))
+
 (define (make-loop combiner item the-list)
   (define (loop l)
     (if (null? l)
@@ -58,3 +66,8 @@
         index
         (loop (- index 1)))))
   (loop (- (vector-length v) 1)))
+
+(define (multiply object n)
+  (generate-list (lambda() object)
+                 n))
+
