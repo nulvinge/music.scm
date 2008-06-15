@@ -2,10 +2,10 @@ all: doi
 
 doi: clear run playmid
 
-doc: clear runc playmid
+doc: clear runc playmid clean
 
 dop: clear runp
-dopc: clear compilep runpc
+dopc: clear compilep runpc cleanp
 
 runp: midiparser.scm
 	gsi midiparser.scm
@@ -14,6 +14,8 @@ compilep:
 	gcc -o midiparser -Os midiparser.c midiparser_.c -lgambc -lm -ldl -lutil
 runpc:
 	./midiparser
+cleanp:
+	rm midiparser.c midiparser_.c
 
 clear:
 	clear
@@ -36,6 +38,8 @@ csize: compile
 	ls -lh music
 runc: csize
 	./music
+cleanc:
+	rm systemfuncs.c math.c midi.c midi_.c music.c
 
 ndf: ndf.cpp
 	g++ ndf.cpp -O2 -o ndf

@@ -71,7 +71,7 @@
 
 (define (note delta length channel note velocity)
   (append (noteon  delta  channel note velocity)
-          (noteoff (+ 10 length) channel note velocity)))
+          (noteoff length channel note velocity)))
 
 (define (combine-loop a b absa absb)
   (define nbytes 3)
@@ -141,16 +141,17 @@
         (+ 60 (random-integer 60))))
 (define (nis->midinotes nis)
  (define delta 0)
-   (make-loop append
-              (lambda(ni)
-                (if (= (cadr ni) 17) ;pause
-                  (begin
-                    (set! delta (car ni))
-                    '())
-                  (let ((mid (ni->midinote delta ni)))
-                    (set! delta 0)
-                    mid)))
-              nis))
+ (set! delta 0)
+ (make-loop append
+            (lambda(ni)
+              (if (= (cadr ni) 17) ;pause
+                (begin
+                  (set! delta (+ delta (car ni)))
+                  '())
+                (let ((mid (ni->midinote delta ni)))
+                  (set! delta 0)
+                  mid)))
+            nis))
 
 (define (ni l c n)
   (list l c n))

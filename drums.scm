@@ -1,8 +1,8 @@
 (define ninstruments 4)
 (define (geninstruments count)
   (if (zero? count)
-    '()
-    (append (list (+ 35 (random-integer 46)))
+    '() ;29 instead of 46 to get rid of the annoying sounds
+    (append (list (+ 34 (random-integer 29)))
             (geninstruments (- count 1)))))
 (define instruments (geninstruments ninstruments))
 (write instruments) (newline)
@@ -15,14 +15,18 @@
   (cons-generated beat beats))
 
 (define (bassline)
-  (define beats 1)
-  (define notes 8)
+  (define beats 4)
+  (define notes 2)
   (define (beat n)
-    (ni (/ ppf (* beats notes))
+    (ni (/ ppf (* notes beats))
         2
         n))
   (define (nbeat n)
-    (multiply (list (beat n))
-              beats))
-  (generate-list (lambda() (nbeat (+ 36 (vector-ref scale (random-integer (vector-length scale))))))
-                 notes))
+    (cons-generated (lambda() (beat n))
+                    notes))
+  (define (rbeat)
+    (nbeat (+ 36
+              (vector-ref scale
+                          (random-integer (vector-length scale))))))
+  (generate-list rbeat
+                 beats))
