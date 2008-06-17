@@ -71,3 +71,12 @@
   (generate-list (lambda() object)
                  n))
 
+(define (identity o)
+  o)
+(define (find-max l)
+  (if (null? l)
+    0
+    (max (car l)
+         (find-max (cdr l)))))
+
+(define << fxarithmetic-shift)

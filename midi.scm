@@ -130,41 +130,77 @@
   (loop 1 l))
 
 ;a ni is like this:
-;(length channel note)
-;channel = 9 means drums
-;channel = 17 means pause
-(define (ni->midinote delta ni)
+;(length note)
+;note = -1 means pause
+(define (ni->midinote delta channel ni)
   (note delta
         (car ni)
+        channel
         (cadr ni)
-        (caddr ni)
         (+ 60 (random-integer 60))))
-(define (nis->midinotes nis)
+(define (nis->midinotes nis channel)
  (define delta 0)
  (set! delta 0)
  (make-loop append
             (lambda(ni)
-              (if (= (cadr ni) 17) ;pause
+              (if (= (cadr ni) -1) ;pause
                 (begin
                   (set! delta (+ delta (car ni)))
                   '())
-                (let ((mid (ni->midinote delta ni)))
+                (let ((mid (ni->midinote delta channel ni)))
                   (set! delta 0)
                   mid)))
             nis))
 
-(define (ni l c n)
-  (list l c n))
+(define (ni l n)
+  (list l n))
 
 (define (pause l)
-  (ni l 17 0))
+  (ni l -1))
 
-(define (make-midi nis-list other-list)
-  (define (loop n o)
+(define (make-midi nis-list channel-list other-list)
+  (define (loop n c o)
     (if (null? n)
       '()
       (append (list (track (append (car o)
-                                   (nis->midinotes (car n)))))
+                                   (nis->midinotes (car n) (car c)))))
               (loop (cdr n)
+                    (cdr c)
                     (cdr o)))))
-  (midifile (loop nis-list other-list)))
+  (midifile (loop nis-list channel-list other-list)))
+
+(define (ni-length nis)
+  (if (null? nis)
+    0
+    (+ (caar nis)
+       (ni-length (cdr nis)))))
+
+(define (form->midi form lines channels other)
+  (define line-lengths '())
+  (define (make-lines element lines len)
+    (if (null? element)
+      '()
+      (let ((line (if (zero? (car element))
+                    (list (pause (car len)))
+                    (car lines))))
+        (cons line
+              (make-lines (cdr element) (cdr lines) (cdr len))))))
+  (define (compose)
+    (map (lambda (element)
+           (make-lines element
+                       lines
+                       line-lengths))
+         form))
+  (define (loop l)
+    (if (null? (cdr l))
+      (car l)
+      (map (lambda(l1 l2) (append l1 l2))
+           (car l)
+           (loop (cdr l)))))
+  (set! line-lengths (map ni-length
+                          lines))
+
+  (write "length-list") (write line-lengths) (newline)
+  (make-midi (loop (compose))
+             channels
+             other))

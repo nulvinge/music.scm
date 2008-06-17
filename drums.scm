@@ -5,28 +5,54 @@
     (append (list (+ 34 (random-integer 29)))
             (geninstruments (- count 1)))))
 (define instruments (geninstruments ninstruments))
-(write instruments) (newline)
+(write "drum instruments")(write instruments) (newline)
 (define (drumline)
   (define beats 4)
   (define (beat)
-    (ni (/ ppf beats)
-        9
+    (ni (/ pphn beats)
         (list-ref instruments (from0mars->absint 4))))
   (cons-generated beat beats))
+
+(define (edist middle)
+  (if (zero? (random-integer 1))
+    middle
+    (if (zero? (random-integer 2))
+      (+ middle 1)
+      (- middle 1))))
+
+(define (rlen len note middle)
+  (define (loop lleft)
+    (let ((l (/ ppf (arithmetic-shift 1 (edist middle)))))
+      (if (> l lleft)
+        (note lleft)
+        (append (note l)
+                (loop (- lleft l))))))
+  (loop len))
 
 (define (bassline)
   (define beats 4)
   (define notes 2)
-  (define (beat n)
-    (ni (/ ppf (* notes beats))
-        2
-        n))
-  (define (nbeat n)
-    (cons-generated (lambda() (beat n))
-                    notes))
-  (define (rbeat)
-    (nbeat (+ 36
-              (vector-ref scale
-                          (random-integer (vector-length scale))))))
-  (generate-list rbeat
+  (define (rbeat l)
+    (ni l
+        (+ 36 (vector-ref scale (random-integer (vector-length scale))))))
+  (define (nbeat l)
+    (multiply (list (rbeat (/ l (* beats notes))))
+              notes))
+  (define (abeat)
+    (nbeat pphn))
+  ;(rlen pphn
+  ;      nbeat
+  ;      5))
+  (generate-list abeat
                  beats))
+
+
+(define (pattern generator pattern)
+  (let ((l (cons-generated generator
+                          (find-max pattern))))
+    (make-loop append
+               (lambda(p) (list-ref l (- p 1)))
+               pattern)))
+
+(pattern bassline
+         '(1 2 1 3))

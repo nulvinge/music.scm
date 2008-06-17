@@ -3,14 +3,15 @@
 (load "midi.scm")
 
 (define ppqn 120)
-(define ppf (* ppqn 4))
+(define ppf  (* ppqn 4))
+(define pphn (* ppqn 2))
 
 (load "scale.scm")
 (load "drums.scm")
 
 
 (define (make-note n)
-  (ni ppqn 1 (+ 60 n)))
+  (ni ppqn (+ 60 n)))
 
 (define (chord-break index)
   (chord-break-random (list-ref chord-list index)))
@@ -42,19 +43,61 @@
     (append (chords)
             progression)))
 
-(define midi (make-midi (list (cons (pause (* 0 ppf))
-                                    (multiply (bassline) 12))
-                              ;(cons (pause (* 8 ppf))
-                              ;      (music))
-                              ;(cons (pause (* 11 ppf)) 
-                              ;      (music))
-                               (multiply (drumline) 16))
-                        (list (instrumentevent 2 33)
-                              ;(append (instrumentevent 1 26)
-                              ;        (balance 1 #x00))
-                              ;(append (instrumentevent 1 27)
-                              ;        (balance 1 #x7F))
-                              (volume 9 96))))
+(define (melody)
+  (define rpitch-pitch 0)
+  (define percent 50)
+  (define (rposdelta)
+    (if (>= 8 (random-integer 10)) ;20%
+      (random-integer 3) ;0-2
+      (floor->exact (* (randomk) (vector-length scale)))))
+  (define (rdelta)
+    (if (> percent (random-integer 100)) ;50%
+      (rposdelta)
+      (- (rposdelta))))
+  (define (rpitch)
+    (set! rpitch-pitch
+      (+ rpitch-pitch
+         (rdelta)))
+    rpitch-pitch)
+  (define (rnote l)
+    (list (ni l
+              (+ 60 (scale-ref (rpitch))))))
+  (define (part)
+    (rlen ppf rnote 3))
+
+  (set! percent 85)
+  (let ((one (part)))
+    (set! percent 15)
+    (append one
+            (part)
+            one
+            (part))))
+
+(define (patternone what)
+  (pattern what '(1 2 1 3)))
+
+(define midi
+(form->midi '((0 0 1)
+              (0 0 1)
+              (0 1 1)
+              (0 1 1)
+              (1 1 1)
+              (1 1 1)
+              (1 0 0)
+              (1 0 0)
+              (1 0 1)
+              (1 0 1))
+            (list (multiply (patternone drumline) 2)
+                  (multiply (patternone bassline) 2)
+                  (melody))
+            '(9 2 1)
+            (list (instrumentevent 2 33)
+                  (volume 9 96)
+                  (append (instrumentevent 1 30)
+                          (balance 1 #x10))
+                  ;(append (instrumentevent 1 27)
+                  ;        (balance 1 #x7F))
+                  )))
 
 (display (length midi)) (newline)
 (let ((port (open-output-file "m.mid")))

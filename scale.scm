@@ -32,10 +32,10 @@
     (loop intervals (vector-find notes start-index))))
 (define scale (list->vector (make-scale key 'minor)))
 
+(define (scale-ref index)
+  (+ (vector-ref scale (modulo index (vector-length scale)))
+     (* 12           (quotient index (vector-length scale)))))
 (define (make-chords scale)
-  (define (scale-ref index)
-    (+ (vector-ref scale (modulo index (vector-length scale)))
-       (* 12           (quotient index (vector-length scale)))))
   (define (make-chord root-index)
     (list (scale-ref root-index)
           (scale-ref (+ root-index 2))
