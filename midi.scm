@@ -175,32 +175,35 @@
     (+ (caar nis)
        (ni-length (cdr nis)))))
 
-(define (form->midi form lines channels other)
+(define (form->midi form longest-index lines channels other)
   (define line-lengths '())
-  (define (make-lines element lines len)
-    (if (null? element)
-      '()
-      (let ((line (if (zero? (car element))
-                    (list (pause (car len)))
-                    (car lines))))
-        (cons line
-              (make-lines (cdr element) (cdr lines) (cdr len))))))
+  (define (even-form form longest)
+    (define (fill line m)
+      (make-loop append
+                 (lambda(l) (multiply (list l) m))
+                 line))
+    (map (lambda(line len)
+           (fill line
+                 (/ longest len)))
+         form
+         line-lengths))
+  (define (make-line element line len)
+    (if (zero? element)
+      (list (pause len))
+      line))
+  (define (make-lines element line len)
+    (make-loop append
+               (lambda(item)
+                 (make-line item line len))
+               element))
   (define (compose)
-    (map (lambda (element)
-           (make-lines element
-                       lines
-                       line-lengths))
-         form))
-  (define (loop l)
-    (if (null? (cdr l))
-      (car l)
-      (map (lambda(l1 l2) (append l1 l2))
-           (car l)
-           (loop (cdr l)))))
+    (map make-lines
+         (even-form form (list-ref line-lengths longest-index))
+         lines
+         line-lengths))
   (set! line-lengths (map ni-length
                           lines))
-
   (write "length-list") (write line-lengths) (newline)
-  (make-midi (loop (compose))
+  (make-midi (compose)
              channels
              other))

@@ -80,3 +80,21 @@
          (find-max (cdr l)))))
 
 (define << fxarithmetic-shift)
+
+(define (generate-sequence n)
+  (if (zero? n)
+    '()
+    (cons n
+          (generate-sequence (- n 1)))))
+;;; shuffling the list of four-digit numbers
+(define (shuffle ls0)
+  (let ((vec (list->vector ls0)))
+    (let loop ((n (vector-length vec)) (ls1 '()))
+      (if (= n 0)
+        ls1
+        (let* ((r (random-integer n))
+               (v (vector-ref vec r)))
+          (vector-set! vec r (vector-ref vec (- n 1)))
+          (loop (- n 1) (cons v ls1)))))))
+(define (random-sequence n)
+  (shuffle (generate-sequence n)))

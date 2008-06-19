@@ -30,7 +30,7 @@
   ;(loop2 start-index 0))
   (let ((intervals (table-ref (list->table types) type)))
     (loop intervals (vector-find notes start-index))))
-(define scale (list->vector (make-scale key 'minor)))
+(define scale (list->vector (make-scale key 'major)))
 
 (define (scale-ref index)
   (+ (vector-ref scale (modulo index (vector-length scale)))

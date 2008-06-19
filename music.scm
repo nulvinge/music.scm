@@ -8,6 +8,7 @@
 
 (load "scale.scm")
 (load "drums.scm")
+(load "form.scm")
 
 
 (define (make-note n)
@@ -43,7 +44,7 @@
     (append (chords)
             progression)))
 
-(define (melody)
+(define (melody root len)
   (define rpitch-pitch 0)
   (define percent 50)
   (define (rposdelta)
@@ -61,9 +62,9 @@
     rpitch-pitch)
   (define (rnote l)
     (list (ni l
-              (+ 60 (scale-ref (rpitch))))))
+              (+ root (scale-ref (rpitch))))))
   (define (part)
-    (rlen ppf rnote 3))
+    (rlen ppf rnote len))
 
   (set! percent 85)
   (let ((one (part)))
@@ -76,30 +77,33 @@
 (define (patternone what)
   (pattern what '(1 2 1 3)))
 
+(define form (make-form 5 2))
+(map (lambda(l) (write l) (newline))
+     form)
+
 (define midi
-(form->midi '((0 0 1)
-              (0 0 1)
-              (0 1 1)
-              (0 1 1)
-              (1 1 1)
-              (1 1 1)
-              (1 0 0)
-              (1 0 0)
-              (1 0 1)
-              (1 0 1))
+(form->midi form
+            2
+            ;'((1 1 1 1 1 1 1 1 1 1)
+            ;  (0 0 1 1 1 1 1 1 1 1)
+            ;  (0   0   0   0   1  )
+            ;  (0 0 0 0 0 0 1 1 1 1)
+            ;  (0 0 0 0 1 1 1 1 1 1))
             (list (multiply (patternone drumline) 2)
                   (multiply (patternone bassline) 2)
-                  (melody))
-            '(9 2 1)
-            (list (instrumentevent 2 33)
+                  (generate-list (lambda() (melody 72 1)) 2)
+                  (melody 60 3)
+                  (melody 48 3))
+            '(9 8 3 1 2)
+            (list (instrumentevent 8 33)
                   (volume 9 96)
+                  (instrumentevent 3 40)
                   (append (instrumentevent 1 30)
-                          (balance 1 #x10))
-                  ;(append (instrumentevent 1 27)
-                  ;        (balance 1 #x7F))
-                  )))
+                          (balance 1 #x00))
+                  (append (instrumentevent 2 27)
+                          (balance 2 #x7F)))))
 
-(display (length midi)) (newline)
+(display (list "length " (length midi) " bytes")) (newline)
 (let ((port (open-output-file "m.mid")))
   (map (lambda (c) (write-char (integer->char c) port))
      midi)
