@@ -1,4 +1,4 @@
-(define ninstruments 8)
+(define ninstruments 4)
 (define (geninstruments count)
   (if (zero? count)
     '() ;29 instead of 46 to get rid of the annoying sounds
@@ -7,18 +7,11 @@
 (define instruments (geninstruments ninstruments))
 (write "drum instruments")(write instruments) (newline)
 (define (drumline)
-  (define beats 8)
-  (define (beat n)
-    (let ((a
-           (ni (/ pphn beats)
-               (list-ref instruments (from0mars->absint ninstruments)))))
-         (if (eq? 0 (remainder n 4))
-             (append a (list (list-ref instruments 7)))
-             (if (zero? (random-integer 2))
-                (append a (list (list-ref instruments
-                                          (from0mars->absint ninstruments))))
-                a))))
-  (map beat (generate-sequence beats)))
+  (define beats 4)
+  (define (beat)
+    (ni (/ pphn beats)
+        (list-ref instruments (from0mars->absint 4))))
+  (cons-generated beat beats))
 
 (define (edist middle)
   (if (zero? (random-integer 1))
@@ -43,23 +36,7 @@
     (ni l
         (+ 36 (vector-ref scale (random-integer (vector-length scale))))))
   (define (nbeat l)
-    (multiply (list (rbeat (/ l (* beats notes))))
+    (multiply (list (rbeat (/ pphn (* beats notes))))
               notes))
-  (define (abeat)
-    (nbeat pphn))
-  ;(rlen pphn
-  ;      nbeat
-  ;      5))
-  (generate-list abeat
+  (generate-list nbeat
                  beats))
-
-
-(define (pattern generator pattern)
-  (let ((l (cons-generated generator
-                          (find-max pattern))))
-    (make-loop append
-               (lambda(p) (list-ref l (- p 1)))
-               pattern)))
-
-(pattern bassline
-         '(1 2 1 3))

@@ -27,6 +27,22 @@
              make-note
              (list-ref chord-list index)))
 
+
+;(define chord-pattern '(1 4 5 2))
+(define chord-pattern
+  (generate-list (lambda ()
+                   (list (random-integer (length chord-list))))
+                 8))
+;(write chord-pattern) (newline)
+
+(define (chords)
+  (make-loop append
+             chord-break
+             chord-pattern))
+(define (music)
+  (let ((progression (chords)))
+    (append (chords)
+            progression)))
 (define (chords root len nprogs)
   (define chord-list
     (map chord->notes
@@ -76,41 +92,28 @@
   (pattern what '(1 2 1 3)))
 
 (define form (make-form 6 3))
-(define form '(
-(1 1 1 1 1 1 0 1 1 0 1 1 1 1 1 1 0)
-(0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1)
-(0 0 1 1 0 1 0 0 0 1 0 1 1 0 1 0 0)
-(0 0 0 1 0 0 0 0 0 0 1 0 1 0 0 0 0)
-(0 0 0 0 1 1 0 1 0 0 0 0 1 1 0 0 0)
-(0 0 0 0 0 1 0 1 1 0 0 0 1 1 1 0 0)
-    ))
-
 (map (lambda(l) (write l) (newline))
      form)
-
-(define (rand-octave)
-    (* 12
-       (mars->int 4 4)))
 
 (define midi
 (form->midi form
             3 ;longest index
             (list (multiply (patternone drumline) 2)
                   (multiply (patternone bassline) 2)
-                  (chords (rand-octave) 1 8)
+                  (chords 60 1 8)
                   ;(melody 60 2)
-                  (melody (rand-octave) 2) ;(generate-list (lambda() (melody 72 1)) 2)
-                  (melody (rand-octave) 3) ;(chords 60 2 8)
-                  (melody (rand-octave) 4))
+                  (melody 72 1) ;(generate-list (lambda() (melody 72 1)) 2)
+                  (chords 60 2 8)
+                  (melody 48 3))
             '(9 8 1 2 3 4)
             (list (volume 9 96)
-                  (instrumentevent 8 (random-integer 40)) ;33)
+                  (instrumentevent 8 33)
                   (append (volume 1 64)
-                          (instrumentevent 1 (random-integer 40))) ;19
-                  (instrumentevent 2 (random-integer 40)) ;40)
-                  (append (instrumentevent 3 (random-integer 40)) ;30
+                          (instrumentevent 1 19))
+                  (instrumentevent 2 40)
+                  (append (instrumentevent 3 30)
                           (balance 3 #x00))
-                  (append (instrumentevent 4 (random-integer 40)) ;27)
+                  (append (instrumentevent 4 27)
                           (balance 4 #x7F)))))
 
 (display (list "length " (length midi) " bytes")) (newline)
@@ -118,3 +121,4 @@
   (map (lambda (c) (write-char (integer->char c) port))
      midi)
   (close-port port))
+

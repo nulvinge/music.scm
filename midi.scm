@@ -112,7 +112,8 @@
       '()
       (append (varlen (arithmetic-shift num -7))
               (list (+ #x80 (bitwise-and num #x7f))))))
-  (if (< #xFFFFFFF num)
+  (if (or (< #xFFFFFFF num)
+          (> 0 num))
     'Error
     (append (varlen (arithmetic-shift num -7))
             (list (bitwise-and num #x7f)))))
@@ -130,14 +131,33 @@
   (loop 1 l))
 
 ;a ni is like this:
-;(length note)
+;(length note ...)
 ;note = -1 means pause
 (define (ni->midinote delta channel ni)
-  (note delta
-        (car ni)
-        channel
-        (cadr ni)
-        (+ 60 (random-integer 60))))
+  (define velocity (+ 60 (random-integer 30)))
+  (define (anote func delta n)
+     (func delta
+           channel
+           n
+           velocity))
+  (define (loop l)
+    (if (null? (cdr l))
+      (append (anote noteon 0 (car l))
+              (anote noteoff (car ni) (car l)))
+      (append (anote noteon  0 (car l))
+              (loop (cdr l))
+              (anote noteoff 0 (car l)))))
+
+  (if (>= 2 (length ni)) ;if not chord
+    (note delta
+          (car ni)
+          channel
+          (cadr ni)
+          (+ 60 (random-integer 60)))
+    (append (anote noteon delta (cadr ni))
+            (loop (cddr ni))
+            (anote noteoff 0 (cadr ni)))))
+
 (define (nis->midinotes nis channel)
  (define delta 0)
  (set! delta 0)
@@ -152,11 +172,15 @@
                   mid)))
             nis))
 
+
 (define (ni l n)
   (list l n))
 
 (define (pause l)
   (ni l -1))
+
+(define (combine-ni n)
+  (ni n -2))
 
 (define (make-midi nis-list channel-list other-list)
   (define (loop n c o)

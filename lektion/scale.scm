@@ -1,9 +1,7 @@
 (define notes (list->vector
   '(C Cis D Dis E F Fis G Gis A Ais H)))
 
-(define key 0);(random-integer 12))
-(define (name-note n)
-  (vector-ref notes (modulo  n 12)))
+(define key (random-integer 12))
 
 (define (make-scale start-index type)
   (define types '((major .      (2 2 1 2 2 2 1))
@@ -28,28 +26,6 @@
 (define (scale-ref index)
   (+ (vector-ref scale (modulo index (vector-length scale)))
      (* 12           (quotient index (vector-length scale)))))
-
-;(map (lambda(l)
-;       (write (map name-note l)) (newline))
-;     chord-list)
-;(write chord-list) (newline)
-;(newline) (newline)
-
-;chord-list in C-major key:
-;    Chord composition
-;        Chord-name
-;            interval-chord
-;    CEG C   I
-;    DFA Dm  ii
-;    EGH Em  iii
-;    FAC F   IV
-;    GHD G   V
-;    ACE Am  vi
-;    HDF ?   ?
-;
-;HDF
-;11 14 17
-;0 3 6
 
 (define intervals '(uni min2 maj2 min3 maj3 per4 dim5 per5 min6 maj6 min7 maj7 octave))
 
@@ -212,7 +188,7 @@
   (define (next-chord chord)
     (if (not (eq? (car chord) 'all))
       (select-random chord)
-      (let ((chord (select-random (if (zero? (random-integer 10))
+      (let ((chord (select-random (if (zero? (random-integer 2))
                                     chord-extension-map
                                     chord-base-map))))
         (cons (caar chord)

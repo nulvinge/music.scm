@@ -98,3 +98,5 @@
           (loop (- n 1) (cons v ls1)))))))
 (define (random-sequence n)
   (shuffle (generate-sequence n)))
+(define (select-random l)
+  (list-ref l (random-integer (length l))))

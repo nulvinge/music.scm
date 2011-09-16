@@ -1,6 +1,6 @@
 all: doi
 
-doi: clear run playmid
+doi: run playmid
 
 doc: clear runc playmid clean
 
@@ -21,7 +21,7 @@ clear:
 	clear
 runmit: music.scm
 	scheme --load music.scm </dev/null
-run: music.scm
+run: clear music.scm
 	gsi music.scm
 debug:
 	scheme --load music.scm --eval "(debug)"
@@ -47,3 +47,9 @@ runndf: ndf
 	./ndf > ndfdata
 plotndf: runndf
 	gnuplot "ndfplot"
+
+teori.html: clear
+	echo "<html><body><table border=2>" > teori.html
+	cat teori.txt|sed -e "s:[ ][ ]*:</td><td>:g"|sed -e "s:^\(.*\):<tr>\1</tr>:g"|cat >> teori.html
+	echo "</table></body></html>" >> teori.html
+	dillo teori.html

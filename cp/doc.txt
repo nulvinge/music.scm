@@ -1,0 +1,12 @@
+Got the following results from a pd (pure data) app:
+
+Indevidual notes was still distinguisable up to about 10 Hz.
+I could still hear the notes at up to about 30 Hz.
+Above 30 Hz there was a note.
+
+Thus cronos protos is about 10 Hz.
+
+10 Hz * 60 seconds = 600 PPM.
+
+120 BPM => 480 QNPM => 1/8 QNPS
+1/8 QNPS * 8 Hz => 1 PPQN

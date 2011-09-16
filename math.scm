@@ -1,5 +1,12 @@
 (random-source-randomize! default-random-source)
 
+(define (-- x)
+        (- x
+           1))
+(define (++ x)
+        (+ x
+           1))
+
 ;makes an exponential number between 0 and (l^2)
 ;with the highest probability around 0
 (define (random2 l)
